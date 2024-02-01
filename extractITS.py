@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
 	if len(extractedRegions)>0:
 		## Run ITSx on regions.fasta
-		terminal('ITSx -t F -i %s -o %s --cpu %s --save_regions %s --not_found F --graphical F --summary F --positions F --fasta F' % (a.o+'regions.fasta',a.o+name,a.cpu,a.which))
+		terminal('ITSx -t F -i %s -o %s --cpu %s --save_regions %s' % (a.o+'regions.fasta',a.o+name,a.cpu,a.which))
 
 		ribcistron = ["SSU", "ITS1", "5_8S", "ITS2", "LSU"]
 		for cist in ribcistron:
