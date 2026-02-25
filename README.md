@@ -1,6 +1,6 @@
 # Extract rDNA sequences from fungal genomes
 
-This utility combines the power of Barrnap – a fast and accurate tool to identify the location of ribosomal RNA genes – and ITSx — software that extracts rDNA sequences from genomic FASTA files — to quickly extract ITS sequences from fungal genomes. 
+This utility combines the power of Barrnap – a fast and accurate tool to identify the location of ribosomal RNA genes – and ITSx — software that extracts rDNA sequences from genomic FASTA files — to quickly extract rDNA sequences from fungal genomes. 
 
 For more information:
 * [Barrnap (BAsic Rapid Ribosomal RNA Predictor)](https://github.com/tseemann/barrnap)
