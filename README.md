@@ -2,7 +2,7 @@
 
 This utility combines the power of [Barrnap](https://github.com/tseemann/barrnap) — a fast and accurate tool to identify the location of ribosomal RNA genes — with [ITSx](https://microbiology.se/software/itsx/) — software that extracts rDNA sequences from genomic FASTA files — to quickly extract rDNA sequences from fungal genomes. 
 
-This script was originally built by [Fantin Mesny](https://github.com/fantin-mesny/Extract-ITS-sequences-from-a-fungal-genome), patched by (Pepijn Kooij)[https://github.com/pwkooij/Extract-ITS-sequences-from-a-fungal-genome], and refactored and further modified by [Alden Dirks](https://github.com/aldendirks/Extract-ITS-sequences-from-a-fungal-genome). 
+This script was originally built by [Fantin Mesny](https://github.com/fantin-mesny/Extract-ITS-sequences-from-a-fungal-genome), patched by [Pepijn Kooij](https://github.com/pwkooij/Extract-ITS-sequences-from-a-fungal-genome), and refactored and further modified by [Alden Dirks](https://github.com/aldendirks/Extract-ITS-sequences-from-a-fungal-genome). 
 
 ## Installation
 
