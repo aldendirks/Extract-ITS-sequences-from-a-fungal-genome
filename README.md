@@ -1,18 +1,25 @@
-# Extract-ITS-sequences-from-a-fungal-genome
+# Extract rDNA sequences from fungal genomes
 
-ITSx (Bengtsson‐Palme *et al.*, 2013) is still the reference method to extract ITS sequences from genomic fasta files. It is however really slow.
-More recently, Barrnap - a fast and accurate method to identify the location of ribosomal RNA genes - was developed.
+This utility combines the power of Barrnap – a fast and accurate tool to identify the location of ribosomal RNA genes – and ITSx — software that extracts rDNA sequences from genomic FASTA files — to quickly extract ITS sequences from fungal genommes. 
 
-By combining these two softwares and performing sequences comparison, this script allows the fast extraction of ITS sequences from fungal genomes.
+This script was originally built by [Fantin Mesny](https://github.com/fantin-mesny/Extract-ITS-sequences-from-a-fungal-genome), patched by (Pepijn Kooij)[https://github.com/pwkooij/Extract-ITS-sequences-from-a-fungal-genome], and refactored and further modified by [Alden Dirks](https://github.com/aldendirks/Extract-ITS-sequences-from-a-fungal-genome). 
+
+## Installation
+
+Install dependencies with conda and clone the GitHub repository. Add the script to your `PATH` for easier execution. 
 
 ```
-python extractITS.py -which ITS2 -i genome.fasta -o ./output/ -name mySpecies
+conda create -n extractITS_env barrnap biopython itsx pandas
+conda activate extractITS_env
+git clone https://github.com/aldendirks/Extract-ITS-sequences-from-a-fungal-genome.git
+cd Extract-ITS-sequences-from-a-fungal-genome
+chmod +x extractITS.py
 ```
 
-## Dependencies
+## Usage
 
-- Python 3.x
-- Barrnap: https://github.com/tseemann/barrnap
-- ITSx: https://microbiology.se/software/itsx
-- Biopython
-- Pandas
+Usage
+
+```
+extractITS.py -i genome.fasta -o ./output/ --which all --prefix species1
+```
