@@ -1,8 +1,8 @@
 # Extract rDNA sequences from fungal genomes
 
-This utility combines the power of Barrnap – a fast and accurate tool to identify the location of ribosomal RNA genes – and ITSx — software that extracts rDNA sequences from genomic FASTA files — to quickly extract rDNA sequences from fungal genomes. 
+This utility combines the power of Barrnap — a fast and accurate tool to identify the location of ribosomal RNA genes — with ITSx — software that extracts rDNA sequences from genomic FASTA files — to quickly extract rDNA sequences from fungal genomes. 
 
-For more information:
+For more information on these software:
 * [Barrnap (BAsic Rapid Ribosomal RNA Predictor)](https://github.com/tseemann/barrnap)
 * [ITSx](https://microbiology.se/software/itsx/)
 
@@ -21,8 +21,6 @@ chmod +x extractITS.py
 ```
 
 ## Usage
-
-Usage
 
 ```
 extractITS.py -i genome.fasta -o ./output/ --which all --prefix species1
