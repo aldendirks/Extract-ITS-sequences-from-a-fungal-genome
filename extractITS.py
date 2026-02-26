@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 
@@ -19,14 +20,9 @@ def get_params(argv):
     parser.add_argument("-i", "--input", help="input genome file", required=True)
     parser.add_argument("-o", "--output", help="output directory", required=True)
     parser.add_argument("--which", help="specify which rDNA sequences to extract (SSU|ITS1|5.8S|ITS2|LSU|all|none); default=all", default="all", required=False)
-    parser.add_argument("-t", "--threads", help=" Number of threads/cores to use", default="1", required=False,)
+    parser.add_argument("-t", "--threads", help="number of threads/cores to use", default="8", required=False,)
     parser.add_argument("-p", "--prefix", help="prefix for output filenames", required=False)
     return parser.parse_args(argv)
-
-
-def terminal(cmd):
-    process = subprocess.run(cmd, capture_output=True, text=True)
-    return process
 
 
 def touch_file(file_path):
@@ -37,7 +33,7 @@ def touch_file(file_path):
 if __name__ == "__main__":
     args = get_params(sys.argv[1:])
     input_filename = os.path.basename(args.input)
-
+    
     args.output = os.path.abspath(args.output)
 
     os.makedirs(args.output, exist_ok=True)
@@ -54,10 +50,22 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
+    print("Run summary:")
+    print(f"  Input genome: {os.path.abspath(args.input)}")
+    print(f"  Output directory: {args.output}")
+    print(f"  Output prefix: {output_prefix}")
+    print(f"  Regions requested: {args.which}")
+    print(f"  Threads: {args.threads}")
+    print()
+
     barrnap_tmp = os.path.join(args.output, "barrnap.tmp")
+    barrnap_cmd = ["barrnap", "--kingdom", "euk", "--threads", args.threads, args.input]
+    print("Running barrnap to identify rDNA regions in the genome assembly...")
+    print(f"Executing command: {shlex.join([str(part) for part in barrnap_cmd])}")
+    print()
     with open(barrnap_tmp, "w") as barrnap_output:
         barrnap_result = subprocess.run(
-            ["barrnap", "--kingdom", "euk", "--threads", args.threads, args.input],
+            barrnap_cmd,
             stdout=barrnap_output,
             stderr=subprocess.PIPE,
             text=True,
@@ -68,13 +76,18 @@ if __name__ == "__main__":
         sys.exit(barrnap_result.returncode)
 
     gff = pd.read_csv(barrnap_tmp, header=None, comment="#", sep="\t")
+    print("Barrnap results:")
+    print(gff)
+    print()
     gff = (
         gff[gff[8].str.contains("18S") | gff[8].str.contains("28S")]
         .sort_values(by=[0, 6, 3, 4])
         .reset_index(drop=True)
     )
     regions = []
+    print("Barrnap results filtered and sorted:")
     print(gff)
+    print()
 
     for i in gff.index:
         try:
@@ -135,21 +148,21 @@ if __name__ == "__main__":
         SeqIO.write(extracted_regions, output_handle, "fasta")
 
     if extracted_regions:
-        itsx_result = terminal(
-            [
-                "ITSx",
-                "-t",
-                "F",
-                "-i",
-                regions_fasta_path,
-                "-o",
-                os.path.join(args.output, output_prefix),
-                "--cpu",
-                args.threads,
-                "--save_regions",
-                args.which,
-            ]
-        )
+        itsx_cmd = [
+            "ITSx",
+            "-t",
+            "F",
+            "-i",
+            regions_fasta_path,
+            "-o",
+            os.path.join(args.output, output_prefix),
+            "--cpu",
+            args.threads,
+            "--save_regions",
+            args.which,
+        ]
+        print(f"Executing command: {shlex.join([str(part) for part in itsx_cmd])}")
+        itsx_result = subprocess.run(itsx_cmd, capture_output=True, text=True)
         if itsx_result.returncode != 0:
             print("ERROR running ITSx:")
             print(itsx_result.stderr.strip())
@@ -161,7 +174,7 @@ if __name__ == "__main__":
             if not os.path.isfile(itsx_output):
                 continue
 
-            print("removing duplicates from", cist)
+            print(f"Removing duplicates from {cist}")
 
             with open(itsx_output, "r") as handle:
                 its1s = list(SeqIO.parse(handle, "fasta"))
@@ -174,16 +187,14 @@ if __name__ == "__main__":
                 if len(diff) == 1:
                     record_name = output_prefix
                 else:
-                    record_name = output_prefix + "_#" + str(n + 1)
+                    record_name = f"{output_prefix}_#{n + 1}"
 
                 unique.append(
                     SeqRecord(
                         Seq(diff[n]),
                         record_name,
                         record_name,
-                        str(seqs.count(diff[n]))
-                        + " copies of this sequence found in "
-                        + input_filename,
+                        f"{seqs.count(diff[n])} copies of this sequence found in {input_filename}",
                     )
                 )
 
@@ -196,34 +207,21 @@ if __name__ == "__main__":
             if len(diff) == 1:
                 copy_count = seqs.count(diff[0])
                 print(
-                    "\nDONE. A single "
-                    + cist
-                    + " sequence was found in "
-                    + str(copy_count)
-                    + " copies, in file "
-                    + input_filename
-                    + "."
+                    f"\nDONE. A single {cist} sequence was found in {copy_count} "
+                    f"copies, in file {input_filename}."
                 )
             elif len(diff) > 1:
                 print(
-                    "\nDONE. "
-                    + str(len(diff))
-                    + " different "
-                    + cist
-                    + " sequences were found in file "
-                    + input_filename
-                    + ". See output files for more info."
+                    f"\nDONE. {len(diff)} different {cist} sequences were found in "
+                    f"file {input_filename}. See output files for more info."
                 )
             elif len(diff) == 0:
                 print(
-                    "\nDONE. No "
-                    + cist
-                    + " sequence found in file "
-                    + input_filename
+                    f"\nDONE. No {cist} sequence found in file {input_filename}"
                 )
     else:
         print(
-            "\nDONE. No " + args.which + " sequence found in file " + input_filename + "."
+            f"\nDONE. No {args.which} sequence found in file {input_filename}."
         )
         touch_file(
             os.path.join(args.output, f"{output_prefix}.{args.which}_filtered.fasta")
