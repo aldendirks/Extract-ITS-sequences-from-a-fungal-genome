@@ -90,7 +90,7 @@ if __name__ == "__main__":
     print(f"  Output directory: {args.output}")
     print(f"  Output prefix: {output_prefix}")
     print(f"  Regions requested: {args.which}")
-    print(f"  Skip partial barrnap hits: {args.partial}")
+    print(f"  Skip partial barrnap hits: {args.nopartial}")
     print(f"  Threads: {args.threads}")
 
     barrnap_tmp = os.path.join(args.output, "barrnap.tmp")
