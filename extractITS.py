@@ -134,7 +134,7 @@ if __name__ == "__main__":
     for i in gff.index:
         try:
             row_annotation = str(gff.loc[i, 8])
-            if args.partial and "partial" in row_annotation:
+            if args.nopartial and "partial" in row_annotation:
                 continue
 
             if gff.loc[i, 6] == "+":
