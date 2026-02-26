@@ -56,13 +56,11 @@ if __name__ == "__main__":
     print(f"  Output prefix: {output_prefix}")
     print(f"  Regions requested: {args.which}")
     print(f"  Threads: {args.threads}")
-    print()
 
     barrnap_tmp = os.path.join(args.output, "barrnap.tmp")
     barrnap_cmd = ["barrnap", "--kingdom", "euk", "--threads", args.threads, args.input]
-    print("Running barrnap to identify rDNA regions in the genome assembly...")
-    print(f"Executing command: {shlex.join([str(part) for part in barrnap_cmd])}")
-    print()
+    print("\nRunning barrnap to identify rDNA regions in the genome assembly...")
+    print(f"\t{shlex.join([str(part) for part in barrnap_cmd])}")
     with open(barrnap_tmp, "w") as barrnap_output:
         barrnap_result = subprocess.run(
             barrnap_cmd,
@@ -71,24 +69,23 @@ if __name__ == "__main__":
             text=True,
         )
     if barrnap_result.returncode != 0:
-        print("ERROR running barrnap:")
+        print("\nERROR running barrnap:")
         print(barrnap_result.stderr.strip())
         sys.exit(barrnap_result.returncode)
 
     gff = pd.read_csv(barrnap_tmp, header=None, comment="#", sep="\t")
-    print("Barrnap results:")
+    print("\nBarrnap results:")
     print(gff)
-    print()
     gff = (
         gff[gff[8].str.contains("18S") | gff[8].str.contains("28S")]
         .sort_values(by=[0, 6, 3, 4])
         .reset_index(drop=True)
     )
     regions = []
-    print("Barrnap results filtered and sorted:")
+    print("\nBarrnap results filtered and sorted:")
     print(gff)
-    print()
 
+    print("\nIdentifying rDNA regions based on barrnap results...")
     for i in gff.index:
         try:
             if "partial" in gff.loc[i, 8]:
@@ -128,26 +125,23 @@ if __name__ == "__main__":
         except (KeyError, IndexError):
             pass
 
-    print(regions)
-
     with open(args.input, "r") as handle:
         fasta = SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
 
-    print("Extracting rDNA regions from the genome assembly...")
     extracted_regions = []
     for region in regions:
-        print(region)
         seq = fasta[region[0]][region[2] : region[3]]
         seq.id = f"{region[0]}_{region[1]}_{region[2]}_{region[3]}"
         seq.name = seq.id
         seq.description = seq.id
         extracted_regions.append(seq)
-        print(seq.description)
+        print(f"\t{seq.description}")
 
     regions_fasta_path = os.path.join(args.output, "regions.fasta")
     with open(regions_fasta_path, "w") as output_handle:
         SeqIO.write(extracted_regions, output_handle, "fasta")
 
+    print("\nExtracting rDNA regions from the genome assembly with ITSx...")
     if extracted_regions:
         itsx_cmd = [
             "ITSx",
@@ -162,10 +156,10 @@ if __name__ == "__main__":
             "--save_regions",
             args.which,
         ]
-        print(f"Executing command: {shlex.join([str(part) for part in itsx_cmd])}")
+        print(f"\t{shlex.join([str(part) for part in itsx_cmd])}")
         itsx_result = subprocess.run(itsx_cmd, capture_output=True, text=True)
         if itsx_result.returncode != 0:
-            print("ERROR running ITSx:")
+            print("\nERROR running ITSx:")
             print(itsx_result.stderr.strip())
             sys.exit(itsx_result.returncode)
 
@@ -175,7 +169,7 @@ if __name__ == "__main__":
             if not os.path.isfile(itsx_output):
                 continue
 
-            print(f"Removing duplicates from {cist}")
+            print(f"\nRemoving duplicates from {cist}")
 
             with open(itsx_output, "r") as handle:
                 its1s = list(SeqIO.parse(handle, "fasta"))
@@ -218,12 +212,14 @@ if __name__ == "__main__":
                 )
             elif len(diff) == 0:
                 print(
-                    f"DONE. No {cist} sequence found in file {input_filename}"
+                    f"No {cist} sequence found in file {input_filename}"
                 )
     else:
         print(
-            f"DONE. No {args.which} sequence found in file {input_filename}."
+            f"No {args.which} sequence found in file {input_filename}."
         )
         touch_file(
             os.path.join(args.output, f"{output_prefix}.{args.which}_filtered.fasta")
         )
+    
+    print("\nDone!")
