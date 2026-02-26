@@ -20,9 +20,10 @@ def get_params(argv):
     parser = argparse.ArgumentParser(description="Utility to extract rDNA sequences from fungal genomes")
     parser.add_argument("-i", "--input", help="input genome file", required=True)
     parser.add_argument("-o", "--output", help="output directory", required=True)
-    parser.add_argument("--which", help="specify which rDNA sequences to extract (SSU|ITS1|5.8S|ITS2|LSU|all|none); default=all", default="all", required=False)
-    parser.add_argument("-t", "--threads", help="number of threads/cores to use", default="8", required=False,)
     parser.add_argument("-p", "--prefix", help="prefix for output filenames", required=False)
+    parser.add_argument("--which", help="specify which rDNA sequences to extract (SSU|ITS1|5.8S|ITS2|LSU|all|none); default=all", default="all", required=False)
+    parser.add_argument("--nopartial", help="skip partial barrnap hits (default: include partial hits)", action="store_true", required=False,)
+    parser.add_argument("-t", "--threads", help="number of threads/cores to use", default="8", required=False,)
     return parser.parse_args(argv)
 
 
@@ -89,12 +90,13 @@ if __name__ == "__main__":
     print(f"  Output directory: {args.output}")
     print(f"  Output prefix: {output_prefix}")
     print(f"  Regions requested: {args.which}")
+    print(f"  Skip partial barrnap hits: {args.partial}")
     print(f"  Threads: {args.threads}")
 
     barrnap_tmp = os.path.join(args.output, "barrnap.tmp")
     barrnap_cmd = ["barrnap", "--kingdom", "euk", "--threads", args.threads, args.input]
     print("\nRunning barrnap to identify rDNA regions in the genome assembly...")
-    print(f"\t{shlex.join([str(part) for part in barrnap_cmd])}")
+    print(f"  {shlex.join([str(part) for part in barrnap_cmd])}")
     with open(barrnap_tmp, "w") as barrnap_output:
         barrnap_result = subprocess.run(
             barrnap_cmd,
@@ -107,14 +109,23 @@ if __name__ == "__main__":
         print(barrnap_result.stderr.strip())
         sys.exit(barrnap_result.returncode)
 
-    gff = pd.read_csv(barrnap_tmp, header=None, comment="#", sep="\t")
+    try:
+        gff = pd.read_csv(barrnap_tmp, header=None, comment="#", sep="\t")
+    except (pd.errors.EmptyDataError, pd.errors.ParserError):
+        gff = pd.DataFrame(columns=range(9))
+
     print("\nBarrnap results:")
     print(gff)
-    gff = (
-        gff[gff[8].str.contains("18S") | gff[8].str.contains("28S")]
-        .sort_values(by=[0, 6, 3, 4])
-        .reset_index(drop=True)
-    )
+
+    if gff.empty or len(gff.columns) < 9:
+        gff = pd.DataFrame(columns=range(9))
+    else:
+        gff = (
+            gff[gff[8].astype(str).str.contains("18S|28S", regex=True, na=False)]
+            .sort_values(by=[0, 6, 3, 4])
+            .reset_index(drop=True)
+        )
+
     regions = []
     print("\nBarrnap results filtered and sorted:")
     print(gff)
@@ -122,9 +133,11 @@ if __name__ == "__main__":
     print("\nIdentifying rDNA regions based on barrnap results...")
     for i in gff.index:
         try:
-            if "partial" in gff.loc[i, 8]:
-                pass
-            elif gff.loc[i, 6] == "+":
+            row_annotation = str(gff.loc[i, 8])
+            if args.partial and "partial" in row_annotation:
+                continue
+
+            if gff.loc[i, 6] == "+":
                 if (
                     "18S_rRNA" in gff.loc[i, 8]
                     and "28S_rRNA" in gff.loc[i + 1, 8]
@@ -136,7 +149,7 @@ if __name__ == "__main__":
                             gff.loc[i, 0],
                             gff.loc[i, 6],
                             gff.loc[i, 3] - 1,
-                            gff.loc[i + 1, 4] - 1,
+                            gff.loc[i + 1, 4],
                         )
                     )
             elif gff.loc[i, 6] == "-":
@@ -151,7 +164,7 @@ if __name__ == "__main__":
                             gff.loc[i, 0],
                             gff.loc[i, 6],
                             gff.loc[i, 3] - 1,
-                            gff.loc[i + 1, 4] - 1,
+                            gff.loc[i + 1, 4],
                         )
                     )
             else:
@@ -169,7 +182,7 @@ if __name__ == "__main__":
         seq.name = seq.id
         seq.description = seq.id
         extracted_regions.append(seq)
-        print(f"\t{seq.description}")
+        print(f"  {seq.description}")
 
     regions_fasta_path = os.path.join(args.output, "regions.fasta")
     with open(regions_fasta_path, "w") as output_handle:
@@ -190,7 +203,7 @@ if __name__ == "__main__":
             "--save_regions",
             args.which,
         ]
-        print(f"\t{shlex.join([str(part) for part in itsx_cmd])}")
+        print(f"  {shlex.join([str(part) for part in itsx_cmd])}")
         itsx_result = subprocess.run(itsx_cmd, capture_output=True, text=True)
         if itsx_result.returncode != 0:
             print("\nERROR running ITSx:")
@@ -256,4 +269,4 @@ if __name__ == "__main__":
             os.path.join(args.output, f"{output_prefix}.{args.which}_filtered.fasta")
         )
     
-    print("\nDone!")
+    print("\nDone!\n")

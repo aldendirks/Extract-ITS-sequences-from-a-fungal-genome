@@ -21,3 +21,5 @@ chmod +x extractITS.py
 ```
 extractITS.py -i genome.fasta -o ./output/ --which all --prefix species1
 ```
+
+Use `--nopartial` to skip partial 18S or 28S Barrnap hits in identifying rDNA regions to extract. By default, partial hits are included.
