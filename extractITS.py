@@ -269,4 +269,4 @@ if __name__ == "__main__":
             os.path.join(args.output, f"{output_prefix}.{args.which}_filtered.fasta")
         )
     
-    print("\nDone!\n")
+    print("\nDone!\n\n")
