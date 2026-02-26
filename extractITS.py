@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import atexit
 import argparse
 import os
 import shlex
@@ -30,6 +31,23 @@ def touch_file(file_path):
         os.utime(file_path, None)
 
 
+class TeeStream:
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, data):
+        for stream in self.streams:
+            stream.write(data)
+        return len(data)
+
+    def flush(self):
+        for stream in self.streams:
+            stream.flush()
+
+    def isatty(self):
+        return any(getattr(stream, "isatty", lambda: False)() for stream in self.streams)
+
+
 if __name__ == "__main__":
     args = get_params(sys.argv[1:])
     input_filename = os.path.basename(args.input)
@@ -43,14 +61,30 @@ if __name__ == "__main__":
     else:
         output_prefix = args.prefix
 
+    log_path = os.path.join(args.output, f"{output_prefix}.log")
+    log_handle = open(log_path, "w", encoding="utf-8")
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    sys.stdout = TeeStream(original_stdout, log_handle)
+    sys.stderr = TeeStream(original_stderr, log_handle)
+
+    def close_log_file():
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+        log_handle.flush()
+        log_handle.close()
+
+    atexit.register(close_log_file)
+    print(f"Logging output to: {log_path}")
+
     if args.which not in ALLOWED_REGIONS:
         print(
-            "ERROR, argument --which not recognized. Please choose between "
-            "'SSU', 'ITS1', '5.8S', 'ITS2', 'LSU', 'all', or 'none'"
+            "\nERROR, argument --which not recognized. Please choose between "
+            "'SSU', 'ITS1', '5.8S', 'ITS2', 'LSU', 'all', or 'none'."
         )
         sys.exit(1)
 
-    print("Run summary:")
+    print("\nRun summary:")
     print(f"  Input genome: {os.path.abspath(args.input)}")
     print(f"  Output directory: {args.output}")
     print(f"  Output prefix: {output_prefix}")
