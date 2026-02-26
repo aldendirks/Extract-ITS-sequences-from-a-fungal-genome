@@ -231,12 +231,15 @@ if __name__ == "__main__":
                 else:
                     record_name = f"{output_prefix}_#{n + 1}"
 
+                sequence_copy_count = seqs.count(diff[n])
+                sequence_copy_label = "copy" if sequence_copy_count == 1 else "copies"
+
                 unique.append(
                     SeqRecord(
                         Seq(diff[n]),
                         record_name,
                         record_name,
-                        f"{seqs.count(diff[n])} copies of this sequence found in {input_filename}",
+                        f"{sequence_copy_count} {sequence_copy_label} of this sequence found in {input_filename}",
                     )
                 )
 
@@ -248,9 +251,10 @@ if __name__ == "__main__":
 
             if len(diff) == 1:
                 copy_count = seqs.count(diff[0])
+                copy_label = "copy" if copy_count == 1 else "copies"
                 print(
                     f"A single {cist} sequence was found in {copy_count} "
-                    f"copies, in file {input_filename}."
+                    f"{copy_label} in file {input_filename}."
                 )
             elif len(diff) > 1:
                 print(
@@ -263,7 +267,8 @@ if __name__ == "__main__":
                 )
     else:
         print(
-            f"No {args.which} sequence found in file {input_filename}."
+            f"No sequences found in file {input_filename} with --which {args.which}. "
+            f"If --nopartial is set, try including partial hits by removing this flag."
         )
         touch_file(
             os.path.join(args.output, f"{output_prefix}.{args.which}_filtered.fasta")

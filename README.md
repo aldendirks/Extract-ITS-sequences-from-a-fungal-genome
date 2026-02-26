@@ -25,8 +25,6 @@ extractITS.py -i genome.fasta -o ./output/ --which all
 # Add prefix and increase threads (default 8)
 extractITS.py -i genome.fasta -o ./output/ -p species1 --which all -t 16
 
-# Skip partial 18S and 28S hits
+# Skip partial 18S and 28S hits (default: not skipped)
 extractITS.py -i genome.fasta -o ./output/ -p species1 --which all -t 16 --nopartial
 ```
-
-Use `--nopartial` to skip partial 18S or 28S Barrnap hits in identifying rDNA regions to extract. By default, partial hits are included.
