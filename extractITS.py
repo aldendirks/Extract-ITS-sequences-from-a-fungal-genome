@@ -133,6 +133,7 @@ if __name__ == "__main__":
     with open(args.input, "r") as handle:
         fasta = SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
 
+    print("Extracting rDNA regions from the genome assembly...")
     extracted_regions = []
     for region in regions:
         print(region)
@@ -141,7 +142,7 @@ if __name__ == "__main__":
         seq.name = seq.id
         seq.description = seq.id
         extracted_regions.append(seq)
-        print(seq)
+        print(seq.description)
 
     regions_fasta_path = os.path.join(args.output, "regions.fasta")
     with open(regions_fasta_path, "w") as output_handle:
@@ -207,21 +208,21 @@ if __name__ == "__main__":
             if len(diff) == 1:
                 copy_count = seqs.count(diff[0])
                 print(
-                    f"\nDONE. A single {cist} sequence was found in {copy_count} "
+                    f"A single {cist} sequence was found in {copy_count} "
                     f"copies, in file {input_filename}."
                 )
             elif len(diff) > 1:
                 print(
-                    f"\nDONE. {len(diff)} different {cist} sequences were found in "
+                    f"{len(diff)} different {cist} sequences were found in "
                     f"file {input_filename}. See output files for more info."
                 )
             elif len(diff) == 0:
                 print(
-                    f"\nDONE. No {cist} sequence found in file {input_filename}"
+                    f"DONE. No {cist} sequence found in file {input_filename}"
                 )
     else:
         print(
-            f"\nDONE. No {args.which} sequence found in file {input_filename}."
+            f"DONE. No {args.which} sequence found in file {input_filename}."
         )
         touch_file(
             os.path.join(args.output, f"{output_prefix}.{args.which}_filtered.fasta")
